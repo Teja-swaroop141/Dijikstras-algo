@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dijkstra's Algorithm Visualizer</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <header>
+    <div class="logo">
+      <span class="logo-icon">⬡</span>
+      <div>
+        <h1>DIJKSTRA<span class="accent">.</span>VIZ</h1>
+        <p class="tagline">Shortest Path Algorithm Visualizer</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="badge">CS PROJECT</div>
+      <div class="badge accent-badge">Interactive</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- CONTROLS PANEL -->
+    <aside class="panel controls-panel">
+      <div class="panel-title">⚙ Controls</div>
+
+      <div class="control-group">
+        <label>Mode</label>
+        <div class="mode-buttons">
+          <button class="mode-btn active" id="btn-add-node" onclick="setMode('addNode')">+ Node</button>
+          <button class="mode-btn" id="btn-add-edge" onclick="setMode('addEdge')">⟶ Edge</button>
+          <button class="mode-btn" id="btn-set-start" onclick="setMode('setStart')">◉ Start</button>
+          <button class="mode-btn" id="btn-set-end" onclick="setMode('setEnd')">◎ End</button>
+          <button class="mode-btn" id="btn-delete" onclick="setMode('delete')">✕ Delete</button>
+        </div>
+      </div>
+
+      <div class="control-group" id="weight-group" style="display:none">
+        <label>Edge Weight <span class="val-badge" id="weight-display">5</span></label>
+        <input type="range" id="weight-slider" min="1" max="20" value="5"
+               oninput="document.getElementById('weight-display').textContent=this.value" />
+      </div>
+
+      <div class="control-group">
+        <label>Animation Speed <span class="val-badge" id="speed-display">Normal</span></label>
+        <input type="range" id="speed-slider" min="1" max="3" value="2"
+               oninput="updateSpeed(this.value)" />
+      </div>
+
+      <div class="control-group">
+        <label>Presets</label>
+        <div class="preset-buttons">
+          <button class="preset-btn" onclick="loadPreset('simple')">Simple</button>
+          <button class="preset-btn" onclick="loadPreset('medium')">Medium</button>
+          <button class="preset-btn" onclick="loadPreset('complex')">Dense</button>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn-primary" onclick="runDijkstra()">▶ Run Dijkstra</button>
+        <button class="btn-secondary" onclick="resetVisual()">↺ Reset Path</button>
+        <button class="btn-danger" onclick="clearAll()">✕ Clear All</button>
+      </div>
+
+      <!-- LEGEND -->
+      <div class="legend">
+        <div class="legend-title">Legend</div>
+        <div class="legend-item"><span class="dot start-dot"></span> Start Node</div>
+        <div class="legend-item"><span class="dot end-dot"></span> End Node</div>
+        <div class="legend-item"><span class="dot visited-dot"></span> Visited</div>
+        <div class="legend-item"><span class="dot frontier-dot"></span> Frontier</div>
+        <div class="legend-item"><span class="dot path-dot"></span> Shortest Path</div>
+      </div>
+    </aside>
+
+    <!-- CANVAS AREA -->
+    <section class="canvas-section">
+      <div class="canvas-toolbar">
+        <span id="mode-label" class="mode-label">Mode: Add Node — Click canvas to place nodes</span>
+        <span id="status-badge" class="status-badge idle">IDLE</span>
+      </div>
+      <div class="canvas-wrapper">
+        <canvas id="graph-canvas"></canvas>
+        <div id="canvas-hint">
+          <div class="hint-icon">⬡</div>
+          <div>Click to add nodes<br/><small>Then connect them with edges</small></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INFO PANEL -->
+    <aside class="panel info-panel">
+      <div class="panel-title">📊 Statistics</div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-num" id="stat-nodes">0</div>
+          <div class="stat-label">Nodes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-edges">0</div>
+          <div class="stat-label">Edges</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="stat-visited">0</div>
+          <div class="stat-label">Visited</div>
+        </div>
+        <div class="stat-card accent-card">
+          <div class="stat-num" id="stat-dist">—</div>
+          <div class="stat-label">Shortest Dist</div>
+        </div>
+      </div>
+
+      <div class="panel-title" style="margin-top:1.5rem">📋 Path Trace</div>
+      <div id="path-trace" class="path-trace">
+        <div class="trace-empty">Run the algorithm to see the shortest path trace here.</div>
+      </div>
+
+      <div class="panel-title" style="margin-top:1.5rem">📖 How It Works</div>
+      <div class="how-it-works">
+        <div class="step-item">
+          <span class="step-num">1</span>
+          <span>Assign ∞ distance to all nodes except start (0)</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2</span>
+          <span>Pick the unvisited node with smallest distance</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3</span>
+          <span>Relax all its neighbors — update shorter paths</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">4</span>
+          <span>Mark as visited. Repeat until end node reached</span>
+        </div>
+        <div class="complexity">
+          <div>Time: <strong>O((V + E) log V)</strong></div>
+          <div>Space: <strong>O(V)</strong></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <script src="dijkstra.js"></script>
+</body>
+</html>
