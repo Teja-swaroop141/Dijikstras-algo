@@ -34,18 +34,18 @@ resizeCanvas();
 
 // ── VISUALS ───────────────────────────────────────────────────
 const colors = {
-  nodeFill:    '#1a1a25',
-  nodeBorder:  '#2a2a3a',
-  nodeText:    '#e8e8f0',
-  edgeLine:    '#2a2a3a',
-  edgeWeight:  '#6b6b8a',
-  start:       '#39d98a',
-  end:         '#ff4757',
-  visited:     '#4dabf7',
-  frontier:    '#9c88ff',
-  path:        '#f5a623',
-  selected:    '#f5a623',
-  hover:       '#4dabf7',
+  nodeFill:    'rgba(26, 26, 37, 0.9)',
+  nodeBorder:  'rgba(255, 255, 255, 0.15)',
+  nodeText:    '#f4f4f5',
+  edgeLine:    'rgba(255, 255, 255, 0.15)',
+  edgeWeight:  '#a1a1aa',
+  start:       '#10b981',
+  end:         '#ef4444',
+  visited:     '#3b82f6',
+  frontier:    '#8b5cf6',
+  path:        '#f59e0b',
+  selected:    '#f59e0b',
+  hover:       '#3b82f6',
 };
 
 const NODE_R = 22;
@@ -84,16 +84,17 @@ function drawEdge(edge) {
 
   if (isPath) {
     ctx.strokeStyle = colors.path;
-    ctx.lineWidth   = 3.5;
+    ctx.lineWidth   = 4;
     ctx.shadowColor = colors.path;
-    ctx.shadowBlur  = 10;
+    ctx.shadowBlur  = 12;
   } else if (isVisited) {
-    ctx.strokeStyle = colors.visited + 'aa';
-    ctx.lineWidth   = 2;
-    ctx.shadowBlur  = 0;
+    ctx.strokeStyle = colors.visited + 'dd';
+    ctx.lineWidth   = 2.5;
+    ctx.shadowColor = colors.visited;
+    ctx.shadowBlur  = 6;
   } else {
     ctx.strokeStyle = colors.edgeLine;
-    ctx.lineWidth   = 1.5;
+    ctx.lineWidth   = 2;
     ctx.shadowBlur  = 0;
   }
 
@@ -110,13 +111,21 @@ function drawEdge(edge) {
   const offsetY =  (to.x - from.x) * .12;
 
   ctx.fillStyle = isPath ? colors.path : colors.edgeWeight;
-  ctx.font = isPath ? 'bold 11px Space Mono, monospace' : '11px Space Mono, monospace';
+  ctx.font = isPath ? 'bold 12px Space Mono, monospace' : '11px Space Mono, monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   // Weight bg
-  ctx.fillStyle = '#0a0a0f';
-  ctx.fillRect(mx + offsetX - 12, my + offsetY - 8, 24, 16);
+  ctx.fillStyle = 'rgba(5, 5, 8, 0.85)';
+  ctx.beginPath();
+  ctx.roundRect(mx + offsetX - 14, my + offsetY - 10, 28, 20, 6);
+  ctx.fill();
+  if (isPath || isVisited) {
+    ctx.strokeStyle = isPath ? colors.path : colors.visited;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  
   ctx.fillStyle = isPath ? colors.path : colors.edgeWeight;
   ctx.fillText(edge.weight, mx + offsetX, my + offsetY);
 }
@@ -151,16 +160,21 @@ function drawNode(node) {
 
   if (isStart)          { border = colors.start;   glow = colors.start; }
   if (isEnd)            { border = colors.end;     glow = colors.end; }
-  if (vs === 'visited') { border = colors.visited; fill = colors.visited + '22'; }
-  if (vs === 'frontier'){ border = colors.frontier; fill = colors.frontier + '22'; glow = colors.frontier; }
-  if (vs === 'path')    { border = colors.path;    fill = colors.path + '33';    glow = colors.path; }
+  if (vs === 'visited') { border = colors.visited; fill = 'rgba(59, 130, 246, 0.15)'; glow = colors.visited; }
+  if (vs === 'frontier'){ border = colors.frontier; fill = 'rgba(139, 92, 246, 0.15)'; glow = colors.frontier; }
+  if (vs === 'path')    { border = colors.path;    fill = 'rgba(245, 158, 11, 0.2)';    glow = colors.path; }
   if (isSel)            { border = colors.selected; glow = colors.selected; }
-  if (isHov && !isSel)  { border = colors.hover; }
+  if (isHov && !isSel)  { border = colors.hover; glow = colors.hover; }
 
+  // Background blur effect for nodes could also be mimicked but we'll stick to clear fill
+  
   // Glow
   if (glow) {
     ctx.shadowColor = glow;
-    ctx.shadowBlur  = 18;
+    ctx.shadowBlur  = isSel || isHov ? 25 : 18;
+  } else {
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 10;
   }
 
   // Circle
@@ -169,21 +183,28 @@ function drawNode(node) {
   ctx.fillStyle   = fill;
   ctx.fill();
   ctx.strokeStyle = border;
-  ctx.lineWidth   = isSel ? 3 : 2;
+  ctx.lineWidth   = isSel || isHov ? 3 : 2;
   ctx.stroke();
-  ctx.shadowBlur  = 0;
+  ctx.shadowBlur  = 0; // Reset
 
   // Distance label (shown during/after algorithm)
   if (node._dist !== undefined && node._dist !== Infinity) {
-    ctx.font      = '8px Space Mono, monospace';
+    ctx.font      = 'bold 9px Space Mono, monospace';
     ctx.fillStyle = vs === 'path' ? colors.path : colors.edgeWeight;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(node._dist, node.x, node.y - NODE_R - 8);
+    
+    // Add subtle bg to dist
+    ctx.fillStyle = 'rgba(5,5,8,0.8)';
+    ctx.beginPath();
+    ctx.roundRect(node.x - 12, node.y - NODE_R - 16, 24, 14, 4);
+    ctx.fill();
+    ctx.fillStyle = vs === 'path' ? colors.path : colors.text;
+    ctx.fillText(node._dist, node.x, node.y - NODE_R - 9);
   }
 
   // Node label
-  ctx.font        = 'bold 13px Syne, sans-serif';
+  ctx.font        = 'bold 14px Syne, sans-serif';
   ctx.fillStyle   = textC;
   ctx.textAlign   = 'center';
   ctx.textBaseline = 'middle';
@@ -194,11 +215,15 @@ function drawNode(node) {
     const badge = isStart ? 'S' : 'E';
     const bColor = isStart ? colors.start : colors.end;
     ctx.beginPath();
-    ctx.arc(node.x + NODE_R * .7, node.y - NODE_R * .7, 7, 0, Math.PI * 2);
+    ctx.arc(node.x + NODE_R * .7, node.y - NODE_R * .7, 8, 0, Math.PI * 2);
     ctx.fillStyle = bColor;
+    ctx.shadowColor = bColor;
+    ctx.shadowBlur = 5;
     ctx.fill();
-    ctx.font = 'bold 7px Space Mono, monospace';
-    ctx.fillStyle = '#0a0a0f';
+    ctx.shadowBlur = 0;
+    
+    ctx.font = 'bold 8px Space Mono, monospace';
+    ctx.fillStyle = '#111';
     ctx.fillText(badge, node.x + NODE_R * .7, node.y - NODE_R * .7);
   }
 }
