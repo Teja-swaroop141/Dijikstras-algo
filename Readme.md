@@ -4,11 +4,9 @@ An interactive shortest-path visualizer built with pure HTML, CSS, and JavaScrip
 
 ![Algorithm](https://img.shields.io/badge/Algorithm-Dijkstra's-f5a623?style=flat-square)
 ![Tech](https://img.shields.io/badge/Built%20With-Vanilla%20JS-f7df1e?style=flat-square&logo=javascript&logoColor=black)
-![Dependencies](https://img.shields.io/badge/Dependencies-None-39d98a?style=flat-square)
 
-## 🔗 [Live Demo →](https://your-username.github.io/dijkstra-visualizer)
 
-> Replace the link above with your actual deployed URL.
+## 🔗 [Live Demo →](https://teja-swaroop141.github.io/Dijikstras-algo/)
 
 ---
 
